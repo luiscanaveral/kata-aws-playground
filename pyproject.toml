@@ -8,11 +8,13 @@ dependencies = [
     "boto3>=1.35",
     "pillow>=10.0",
     "cassandra-driver>=3.29",
+    "aws-cdk-lib>=2.150",
+    "constructs>=10.0",
 ]
 
 [tool.setuptools.package-data]
 "*" = ["*.sh"]
 
 [tool.setuptools.packages.find]
-where = ["scenarios"]
-include = ["scenarios*"]
+where = ["scenarios", "infrastructure"]
+include = ["scenarios*", "infrastructure*"]

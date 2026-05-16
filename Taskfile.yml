@@ -37,76 +37,113 @@ tasks:
     cmds:
       - docker compose logs -f
 
-  setup:sqs-lambda:
-    desc: Setup SQS -> Lambda scenario resources
+  init:
+    desc: Deploy all CDK infrastructure stacks
     cmds:
-      - uv run python -m scenarios.sqs_lambda.setup
+      - uv run python infrastructure/deploy.py
 
-  run:sqs-lambda:
-    desc: Send order events to SQS (triggers Lambda via event source mapping)
-    deps: [setup:sqs-lambda]
+  clean:
+    desc: Remove all data and stop services
+    cmds:
+      - docker compose down -v
+
+  # ─── SQS → Lambda ────────────────────────────────────
+
+  sqs-lambda:infrastructure:
+    desc: Deploy SQS → Lambda infrastructure (queue, function, ESM)
+    cmds:
+      - uv run python infrastructure/deploy.py SqsLambdaStack
+
+  sqs-lambda:run:
+    desc: Send order events to SQS (triggers Lambda via ESM)
+    deps: [sqs-lambda:infrastructure]
     cmds:
       - uv run python -m scenarios.sqs_lambda.run
 
-  setup:image-upload:
-    desc: Setup Lambda image upload scenario resources
-    cmds:
-      - uv run python -m scenarios.image_upload.setup
+  # ─── Lambda Image Upload → S3 ────────────────────────
 
-  run:image-upload:
+  image-upload:infrastructure:
+    desc: Deploy Image Upload infrastructure (bucket, function)
+    cmds:
+      - uv run python infrastructure/deploy.py ImageUploadStack
+
+  image-upload:run:
     desc: Invoke Lambda to upload an image to S3
-    deps: [setup:image-upload]
+    deps: [image-upload:infrastructure]
     cmds:
       - uv run python -m scenarios.image_upload.run
 
-  scenario:sqs-lambda:
-    desc: Run the full SQS -> Lambda scenario (setup + execute)
-    cmds:
-      - task: setup:sqs-lambda
-      - task: run:sqs-lambda
+  # ─── EC2 WordPress ───────────────────────────────────
 
-  scenario:image-upload:
-    desc: Run the full Lambda image upload -> S3 scenario (setup + execute)
+  ec2-wordpress:infrastructure:
+    desc: Deploy EC2 WordPress infrastructure (VPC, SG, instance)
     cmds:
-      - task: setup:image-upload
-      - task: run:image-upload
+      - uv run python infrastructure/deploy.py Ec2WordpressStack
 
-  setup:ec2-wordpress:
-    desc: Setup EC2 with WordPress scenario
-    cmds:
-      - uv run python -m scenarios.ec2_wordpress.setup
-
-  run:ec2-wordpress:
+  ec2-wordpress:run:
     desc: Show WordPress EC2 instance status and access info
-    deps: [setup:ec2-wordpress]
+    deps: [ec2-wordpress:infrastructure]
     cmds:
       - uv run python -m scenarios.ec2_wordpress.run
 
-  scenario:ec2-wordpress:
-    desc: Run the full EC2 with WordPress scenario
-    cmds:
-      - task: setup:ec2-wordpress
-      - task: run:ec2-wordpress
+  # ─── IAM API Auth ────────────────────────────────────
 
-  setup:iam-api:
-    desc: Setup IAM API auth scenario
+  iam-api:infrastructure:
+    desc: Deploy IAM API Auth infrastructure (API GW, Lambda, users)
     cmds:
-      - uv run python -m scenarios.iam_api_auth.setup
+      - uv run python infrastructure/deploy.py IamApiAuthStack
 
-  run:iam-api:
+  iam-api:run:
     desc: Test API Gateway with IAM authorization
-    deps: [setup:iam-api]
+    deps: [iam-api:infrastructure]
     cmds:
       - uv run python -m scenarios.iam_api_auth.run
 
-  scenario:iam-api:
-    desc: Run the full IAM API auth scenario
+  # ─── Cassandra Orders ────────────────────────────────
+
+  cassandra-orders:infrastructure:
+    desc: Deploy Cassandra Orders infrastructure (SQS, Lambda)
     cmds:
-      - task: setup:iam-api
-      - task: run:iam-api
+      - uv run python infrastructure/deploy.py CassandraOrdersStack
+
+  cassandra-orders:run:
+    desc: Run Cassandra orders CRUD demonstration
+    deps: [cassandra-orders:infrastructure]
+    cmds:
+      - task: setup:cassandra-schema
+      - uv run python -m scenarios.cassandra_orders.run
+
+  # ─── Step Functions ──────────────────────────────────
+
+  stepfunctions:infrastructure:
+    desc: Deploy Step Functions infrastructure (Lambdas, state machine)
+    cmds:
+      - uv run python infrastructure/deploy.py StepFunctionsStack
+
+  stepfunctions:run:
+    desc: Execute Step Functions workflow with test orders
+    deps: [stepfunctions:infrastructure]
+    cmds:
+      - uv run python -m scenarios.stepfunctions_orchestration.run
+
+  # ─── DynamoDB Tickets ────────────────────────────────
+
+  dynamodb-tickets:infrastructure:
+    desc: Deploy DynamoDB Tickets infrastructure (table, API GW, Lambda)
+    cmds:
+      - uv run python infrastructure/deploy.py DynamodbTicketsStack
+
+  dynamodb-tickets:run:
+    desc: Test ticket reservation + purchase flow
+    deps: [dynamodb-tickets:infrastructure]
+    cmds:
+      - uv run python -m scenarios.dynamodb_ticket_system.run
+
+  # ─── Shared ──────────────────────────────────────────
 
   setup:cassandra-schema:
     desc: Create Cassandra keyspace and orders table
+    internal: true
     cmds:
       - >
         echo "Waiting for Cassandra to be ready..."
@@ -131,65 +168,3 @@ tasks:
           );
         "
       - echo "Cassandra schema created"
-
-  setup:cassandra-orders:
-    desc: Setup Cassandra orders scenario
-    cmds:
-      - task: setup:cassandra-schema
-      - uv run python -m scenarios.cassandra_orders.setup
-
-  run:cassandra-orders:
-    desc: Run Cassandra orders CRUD demonstration
-    deps: [setup:cassandra-orders]
-    cmds:
-      - uv run python -m scenarios.cassandra_orders.run
-
-  scenario:cassandra-orders:
-    desc: Run the full Cassandra orders scenario
-    cmds:
-      - task: setup:cassandra-orders
-      - task: run:cassandra-orders
-
-  setup:stepfunctions:
-    desc: Setup Step Functions orchestration scenario
-    cmds:
-      - uv run python -m scenarios.stepfunctions_orchestration.setup
-
-  run:stepfunctions:
-    desc: Execute Step Functions workflow with test orders
-    deps: [setup:stepfunctions]
-    cmds:
-      - uv run python -m scenarios.stepfunctions_orchestration.run
-
-  scenario:stepfunctions:
-    desc: Run the full Step Functions orchestration scenario
-    cmds:
-      - task: setup:stepfunctions
-      - task: run:stepfunctions
-
-  setup:dynamodb-tickets:
-    desc: Setup DynamoDB ticket selling system
-    cmds:
-      - uv run python -m scenarios.dynamodb_ticket_system.setup
-
-  run:dynamodb-tickets:
-    desc: Test ticket reservation + purchase flow
-    deps: [setup:dynamodb-tickets]
-    cmds:
-      - uv run python -m scenarios.dynamodb_ticket_system.run
-
-  scenario:dynamodb-tickets:
-    desc: Run the full DynamoDB ticket selling scenario
-    cmds:
-      - task: setup:dynamodb-tickets
-      - task: run:dynamodb-tickets
-
-  init:
-    desc: Initialize all AWS resources (buckets, queues, roles)
-    cmds:
-      - docker compose exec floci /bin/bash /etc/localstack/init/ready.d/init-aws.sh
-
-  clean:
-    desc: Remove all data and stop services
-    cmds:
-      - docker compose down -v

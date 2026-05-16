@@ -13,4 +13,5 @@ venv/
 data/
 floci_data/
 cassandra_data/
+cdk.out/
 .DS_Store

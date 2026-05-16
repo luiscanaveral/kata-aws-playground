@@ -147,7 +147,7 @@ flowchart TD
 ```mermaid
 flowchart LR
     C[Client] -->|List GET /tickets| GW[API Gateway]
-    C -->|Details GET /tickets/{id}| GW
+    C -->|"Details GET /tickets/{id}"| GW
     C -->|Reserve PUT .../reserve| GW
     C -->|Purchase PUT .../purchase| GW
     C -->|Release PUT .../release| GW

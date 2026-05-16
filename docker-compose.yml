@@ -14,8 +14,6 @@ services:
     volumes:
       - floci_data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./lambda_functions:/app/lambda_functions
-      - ./scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
 
   cassandra:
     image: cassandra:4.1

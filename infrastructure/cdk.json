@@ -1,0 +1,9 @@
+{
+  "app": "python3 app.py",
+  "output": "cdk.out",
+  "context": {
+    "floci_endpoint": "http://localhost:4566",
+    "floci_region": "us-east-1",
+    "floci_account": "000000000000"
+  }
+}
