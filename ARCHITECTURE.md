@@ -218,6 +218,43 @@ flowchart LR
 
 ---
 
+## 9. SNS Fanout — Social Feed
+
+```mermaid
+flowchart LR
+    subgraph Publisher
+        PG[Post Generator<br/>run.py · every 15s]
+    end
+
+    PG -->|Publish| SNS[SNS Topic<br/>social-feed-topic]
+
+    SNS -->|Fanout| FQ[SQS Queue<br/>feed-queue]
+    SNS -->|Fanout| AQ[SQS Queue<br/>audit-queue]
+
+    FQ -->|ESM| FP[Lambda<br/>feed-processor]
+    AQ -->|ESM| AL[Lambda<br/>audit-logger]
+
+    FP -->|PutItem| DDB[(DynamoDB<br/>social_posts)]
+    AL -->|console.log| CW[CloudWatch Logs]
+
+    subgraph Frontend
+        FE[Browser<br/>HTML + JS]
+    end
+
+    FE -->|GET /| API[API Gateway]
+    FE -->|GET /feed| API
+    API -->|Proxy| FL[Lambda<br/>feed-api]
+    FL -->|Scan| DDB
+```
+
+**Flow:** A Python script publishes a random post to SNS every 15 seconds. SNS fans out to two SQS queues: `feed-queue` triggers a Lambda that stores the post in DynamoDB, and `audit-queue` triggers a Lambda that logs the event to CloudWatch. A frontend (HTML+JS served by API Gateway) polls `/feed` and displays posts with a Refresh button.
+
+**Key concepts:** SNS fanout pattern (one topic, multiple subscribers), SQS queues as subscribers, SQS-triggered Lambda, DynamoDB storage, API Gateway with simple frontend, polling refresh pattern.
+
+**Run:** `task sns-fanout:infrastructure` then `task sns-fanout:run` (then open the printed URL)
+
+---
+
 ## Infrastructure
 
 ```mermaid

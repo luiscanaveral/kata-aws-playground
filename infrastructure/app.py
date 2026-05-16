@@ -11,6 +11,7 @@ from infrastructure.stacks.cassandra_orders import CassandraOrdersStack
 from infrastructure.stacks.stepfunctions import StepFunctionsStack
 from infrastructure.stacks.dynamodb_tickets import DynamodbTicketsStack
 from infrastructure.stacks.notification_system import NotificationSystemStack
+from infrastructure.stacks.sns_fanout import SnsFanoutStack
 
 app = cdk.App()
 
@@ -29,5 +30,6 @@ CassandraOrdersStack(app, "CassandraOrdersStack", env=env, floci_endpoint=floci_
 StepFunctionsStack(app, "StepFunctionsStack", env=env, floci_endpoint=floci_endpoint)
 DynamodbTicketsStack(app, "DynamodbTicketsStack", env=env, floci_endpoint=floci_endpoint)
 NotificationSystemStack(app, "NotificationSystemStack", env=env, floci_endpoint=floci_endpoint)
+SnsFanoutStack(app, "SnsFanoutStack", env=env, floci_endpoint=floci_endpoint)
 
 app.synth()

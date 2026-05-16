@@ -139,6 +139,19 @@ tasks:
     cmds:
       - uv run python -m scenarios.dynamodb_ticket_system.run
 
+  # ─── SNS Fanout ──────────────────────────────────────
+
+  sns-fanout:infrastructure:
+    desc: Deploy SNS fanout infrastructure (topic, queues, processors, APIs)
+    cmds:
+      - uv run python infrastructure/deploy.py SnsFanoutStack
+
+  sns-fanout:run:
+    desc: Publish random posts to SNS every 15s; open the frontend feed
+    deps: [sns-fanout:infrastructure]
+    cmds:
+      - uv run python -m scenarios.sns_fanout.run
+
   # ─── Notification System ─────────────────────────────
 
   notification-system:infrastructure:

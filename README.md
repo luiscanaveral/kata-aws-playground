@@ -43,6 +43,7 @@ Each scenario has two phases — **infrastructure** (CDK stack) and **run** (cod
 | Cassandra Orders | `task cassandra-orders:infrastructure` | `task cassandra-orders:run` | NoSQL + SQS events |
 | Step Functions | `task stepfunctions:infrastructure` | `task stepfunctions:run` | Parallel/sequential orchestration |
 | DynamoDB Tickets | `task dynamodb-tickets:infrastructure` | `task dynamodb-tickets:run` | Conditional writes + API |
+| SNS Fanout Feed | `task sns-fanout:infrastructure` | `task sns-fanout:run` | Pub/sub with SNS → SQS → Lambda + frontend |
 | Notification System | `task notification-system:infrastructure` | `task notification-system:run` | Package tracking + SNS notifications |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed diagrams and descriptions.
@@ -67,7 +68,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed diagrams and descriptions.
 │   ├── cassandra_orders/       # Cassandra + SQS
 │   ├── stepfunctions_orchestration/  # Step Functions
 │       ├── dynamodb_ticket_system/       # DynamoDB + API
-    └── notification_system/          # Package tracking + SNS notifications
+    ├── notification_system/          # Package tracking + SNS notifications
+    └── sns_fanout/                   # SNS fanout + social feed
 └── ARCHITECTURE.md             # Architecture diagrams
 ```
 
