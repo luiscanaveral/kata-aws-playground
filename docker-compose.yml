@@ -12,7 +12,7 @@ services:
       FLOCI_SERVICES_LAMBDA_EPHEMERAL: "false"
       FLOCI_SERVICES_LAMBDA_POLL_INTERVAL_MS: "2000"
     volumes:
-      - floci_data:/app/data
+      - ./.local/floci_data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
 
   cassandra:
@@ -23,13 +23,11 @@ services:
       CASSANDRA_CLUSTER_NAME: "FlociPlayground"
       CASSANDRA_NUM_TOKENS: "16"
     volumes:
-      - cassandra_data:/var/lib/cassandra
+      - ./.local/cassandra_data:/var/lib/cassandra
     healthcheck:
       test: ["CMD-SHELL", "nodetool status | grep -q UN"]
       interval: 15s
       timeout: 5s
       retries: 15
 
-volumes:
-  floci_data:
-  cassandra_data:
+
