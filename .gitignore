@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.pem
+*.zip
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+.uv/
+data/
+floci_data/
+cassandra_data/
+.DS_Store

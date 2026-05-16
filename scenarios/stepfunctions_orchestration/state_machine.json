@@ -1,0 +1,67 @@
+{
+  "Comment": "Order Processing Workflow - sequential + parallel orchestration",
+  "StartAt": "ValidateOrder",
+  "States": {
+    "ValidateOrder": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfn-validate-order",
+      "ResultPath": "$",
+      "Next": "CheckInventoryAndProcessPayment"
+    },
+    "CheckInventoryAndProcessPayment": {
+      "Type": "Parallel",
+      "ResultPath": "$.parallel_results",
+      "Next": "EvaluateResults",
+      "Branches": [
+        {
+          "StartAt": "CheckInventory",
+          "States": {
+            "CheckInventory": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfn-check-inventory",
+              "ResultPath": "$",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "ProcessPayment",
+          "States": {
+            "ProcessPayment": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfn-process-payment",
+              "ResultPath": "$",
+              "End": true
+            }
+          }
+        }
+      ]
+    },
+    "EvaluateResults": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.parallel_results[0].inventory_status",
+          "StringEquals": "OUT_OF_STOCK",
+          "Next": "SendFailureNotification"
+        },
+        {
+          "Variable": "$.parallel_results[1].payment_status",
+          "StringEquals": "DECLINED",
+          "Next": "SendFailureNotification"
+        }
+      ],
+      "Default": "SendConfirmation"
+    },
+    "SendConfirmation": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfn-send-confirmation",
+      "End": true
+    },
+    "SendFailureNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfn-send-confirmation",
+      "End": true
+    }
+  }
+}

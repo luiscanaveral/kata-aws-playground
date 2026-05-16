@@ -1,0 +1,37 @@
+services:
+  floci:
+    image: floci/floci:latest-compat
+    ports:
+      - "4566:4566"
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_DEFAULT_REGION: us-east-1
+      FLOCI_DEFAULT_ACCOUNT_ID: "000000000000"
+      FLOCI_STORAGE_MODE: hybrid
+      FLOCI_SERVICES_LAMBDA_HOT_RELOAD_ENABLED: "true"
+      FLOCI_SERVICES_LAMBDA_EPHEMERAL: "false"
+      FLOCI_SERVICES_LAMBDA_POLL_INTERVAL_MS: "2000"
+    volumes:
+      - floci_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./lambda_functions:/app/lambda_functions
+      - ./scripts/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+
+  cassandra:
+    image: cassandra:4.1
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: "FlociPlayground"
+      CASSANDRA_NUM_TOKENS: "16"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q UN"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  floci_data:
+  cassandra_data:
