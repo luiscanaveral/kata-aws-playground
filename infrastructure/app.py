@@ -10,6 +10,7 @@ from infrastructure.stacks.iam_api_auth import IamApiAuthStack
 from infrastructure.stacks.cassandra_orders import CassandraOrdersStack
 from infrastructure.stacks.stepfunctions import StepFunctionsStack
 from infrastructure.stacks.dynamodb_tickets import DynamodbTicketsStack
+from infrastructure.stacks.notification_system import NotificationSystemStack
 
 app = cdk.App()
 
@@ -27,5 +28,6 @@ IamApiAuthStack(app, "IamApiAuthStack", env=env, floci_endpoint=floci_endpoint)
 CassandraOrdersStack(app, "CassandraOrdersStack", env=env, floci_endpoint=floci_endpoint)
 StepFunctionsStack(app, "StepFunctionsStack", env=env, floci_endpoint=floci_endpoint)
 DynamodbTicketsStack(app, "DynamodbTicketsStack", env=env, floci_endpoint=floci_endpoint)
+NotificationSystemStack(app, "NotificationSystemStack", env=env, floci_endpoint=floci_endpoint)
 
 app.synth()

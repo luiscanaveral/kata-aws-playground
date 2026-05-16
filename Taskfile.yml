@@ -139,6 +139,19 @@ tasks:
     cmds:
       - uv run python -m scenarios.dynamodb_ticket_system.run
 
+  # ─── Notification System ─────────────────────────────
+
+  notification-system:infrastructure:
+    desc: Deploy notification system infrastructure (DynamoDB, SQS, SNS, Lambda, API GW)
+    cmds:
+      - uv run python infrastructure/deploy.py NotificationSystemStack
+
+  notification-system:run:
+    desc: Test package tracking with notification dispatch
+    deps: [notification-system:infrastructure]
+    cmds:
+      - uv run python -m scenarios.notification_system.run
+
   # ─── Shared ──────────────────────────────────────────
 
   setup:cassandra-schema:

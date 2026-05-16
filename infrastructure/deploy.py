@@ -1,8 +1,12 @@
 """Deploy CDK stacks to Floci via CloudFormation."""
+import io
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 import boto3
@@ -69,19 +73,7 @@ def deploy_assets():
                     if "BucketAlready" not in str(e):
                         print(f"  Bucket note: {e}")
 
-                import io
-                import zipfile
-
-                buf = io.BytesIO()
-                if source_abs.is_dir():
-                    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-                        for file_path in sorted(source_abs.rglob("*")):
-                            if file_path.is_file():
-                                arcname = str(file_path.relative_to(source_abs))
-                                zf.write(str(file_path), arcname)
-                else:
-                    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-                        zf.write(str(source_abs), source_abs.name)
+                buf = _package_asset(source_abs, object_key)
 
                 buf.seek(0)
                 s3.put_object(
@@ -96,6 +88,51 @@ def deploy_assets():
                     bucket_name,
                     object_key,
                 )
+
+
+def _package_asset(source_abs: Path, object_key: str) -> io.BytesIO:
+    buf = io.BytesIO()
+    if source_abs.is_dir():
+        has_requirements = (source_abs / "requirements.txt").exists()
+        if has_requirements:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmp_path = Path(tmpdir)
+                for f in source_abs.rglob("*"):
+                    if f.is_file() and f.name != "requirements.txt":
+                        rel = f.relative_to(source_abs)
+                        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(f, tmp_path / rel)
+
+                subprocess.run(
+                    [
+                        sys.executable, "-m", "pip", "install",
+                        "-r", str(source_abs / "requirements.txt"),
+                        "-t", str(tmp_path),
+                        "--only-binary=:all:",
+                    ],
+                    check=False,
+                    capture_output=True,
+                )
+
+                with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for file_path in sorted(tmp_path.rglob("*")):
+                        if file_path.is_file():
+                            arcname = str(file_path.relative_to(tmp_path))
+                            zf.write(str(file_path), arcname)
+        else:
+            with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+                for file_path in sorted(source_abs.rglob("*")):
+                    if file_path.is_file():
+                        arcname = str(file_path.relative_to(source_abs))
+                        zf.write(str(file_path), arcname)
+    else:
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(str(source_abs), source_abs.name)
+
+    size_kb = buf.tell() / 1024
+    print(f"  Packaged {object_key} ({size_kb:.0f} KB)")
+    buf.seek(0)
+    return buf
 
 
 def _patch_template_s3_ref(template_path: Path, bucket: str, key: str):

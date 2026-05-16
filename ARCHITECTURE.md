@@ -173,6 +173,52 @@ flowchart LR
 
 ---
 
+## 8. Notification System (Package Tracking)
+
+```mermaid
+flowchart LR
+    C[Customer] -->|POST /packages<br/>GET /packages/{id}| GW[API Gateway]
+    D[Driver App] -->|POST .../events| GW
+    C -->|GET/PUT /preferences| GW
+    
+    GW -->|Proxy| L[Lambda<br/>notification-system-handler]
+    
+    L -->|CRUD| PKG[(DynamoDB<br/>packages)]
+    L -->|CRUD| PREF[(DynamoDB<br/>preferences)]
+    L -->|Cache pref| REDIS[(Redis<br/>preference cache)]
+    L -->|Enqueue event| SQS[SQS Queue<br/>driver-events]
+    SQS -->|ESM| L
+    
+    L -->|Notification| SNS[SNS Topic<br/>notifications-topic]
+    SNS -->|SMS| PHONE[(Phone)]
+    SNS -->|Email| EMAIL[(Email)]
+    
+    subgraph "Driver Events"
+        PU[package_picked_up]
+        PL[package_location_change]
+        PD[package_delivered]
+        PU -->|Notify| L
+        PL -->|Notify| L
+        PD -->|No notification| L
+    end
+    
+    subgraph "Preference Cache"
+        direction LR
+        CACHE[Redis TTL: 300s]
+        MISS[Cache Miss]
+        HIT[Cache Hit]
+        MISS -->|Query DynamoDB| PREF
+    end
+```
+
+**Flow:** Customers create packages and set notification preferences (SMS/Email priority). Drivers send location events via API, which update DynamoDB and enqueue to SQS. A Lambda processses the SQS events — for `package_picked_up` and `package_location_change` it checks the user's notification preference (cached in Redis with 300s TTL), then dispatches via SNS to the preferred channel(s).
+
+**Key concepts:** API Gateway REST API, DynamoDB conditional updates, SQS event source mapping, ElastiCache/Redis caching pattern, SNS multi-channel notifications, async event processing.
+
+**Run:** `task notification-system:infrastructure` then `task notification-system:run`
+
+---
+
 ## Infrastructure
 
 ```mermaid
