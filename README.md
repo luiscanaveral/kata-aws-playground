@@ -50,7 +50,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed diagrams and descriptions.
 ## Project Structure
 
 ```
-├── docker-compose.yml          # Floci + Cassandra + Redis
+├── docker-compose.yml          # Floci + Cassandra
 ├── pyproject.toml              # Python deps (boto3, pillow, cdk, etc.)
 ├── Taskfile.yml                # All scenarios as tasks
 ├── infrastructure/             # AWS CDK infrastructure

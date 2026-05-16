@@ -2,6 +2,7 @@ import aws_cdk as cdk
 from aws_cdk import Duration
 from aws_cdk import aws_apigateway as apigw
 from aws_cdk import aws_dynamodb as dynamodb
+from aws_cdk import aws_elasticache as elasticache
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_sns as sns
@@ -45,6 +46,15 @@ class NotificationSystemStack(cdk.Stack):
             topic_name="notifications-topic",
         )
 
+        cache_cluster = elasticache.CfnCacheCluster(
+            self,
+            "NotificationCache",
+            cache_node_type="cache.t3.micro",
+            engine="redis",
+            num_cache_nodes=1,
+            cluster_name="notification-cache",
+        )
+
         role = iam.Role(
             self,
             "NotificationLambdaRole",
@@ -76,8 +86,8 @@ class NotificationSystemStack(cdk.Stack):
                 "PREF_TABLE": pref_table.table_name,
                 "EVENT_QUEUE_URL": event_queue.attr_queue_url,
                 "SNS_TOPIC_ARN": topic.attr_topic_arn,
-                "REDIS_HOST": "redis",
-                "REDIS_PORT": "6379",
+                "REDIS_HOST": cache_cluster.attr_redis_endpoint_address,
+                "REDIS_PORT": cache_cluster.attr_redis_endpoint_port,
                 "AWS_ENDPOINT_URL": "http://floci:4566",
             },
         )

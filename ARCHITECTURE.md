@@ -202,18 +202,17 @@ flowchart LR
         PD -->|No notification| L
     end
     
-    subgraph "Preference Cache"
+    subgraph "ElastiCache (Redis)"
         direction LR
         CACHE[Redis TTL: 300s]
-        MISS[Cache Miss]
+        MISS[Cache Miss → Query DynamoDB]
         HIT[Cache Hit]
-        MISS -->|Query DynamoDB| PREF
     end
 ```
 
-**Flow:** Customers create packages and set notification preferences (SMS/Email priority). Drivers send location events via API, which update DynamoDB and enqueue to SQS. A Lambda processses the SQS events — for `package_picked_up` and `package_location_change` it checks the user's notification preference (cached in Redis with 300s TTL), then dispatches via SNS to the preferred channel(s).
+**Flow:** Customers create packages and set notification preferences (SMS/Email priority). Drivers send location events via API, which update DynamoDB and enqueue to SQS. A Lambda processses the SQS events — for `package_picked_up` and `package_location_change` it checks the user's notification preference (cached in Floci's ElastiCache Redis with 300s TTL via `redis-py`), then dispatches via SNS to the preferred channel(s).
 
-**Key concepts:** API Gateway REST API, DynamoDB conditional updates, SQS event source mapping, ElastiCache/Redis caching pattern, SNS multi-channel notifications, async event processing.
+**Key concepts:** API Gateway REST API, DynamoDB conditional updates, SQS event source mapping, ElastiCache (Redis) caching pattern, SNS multi-channel notifications, async event processing.
 
 **Run:** `task notification-system:infrastructure` then `task notification-system:run`
 
