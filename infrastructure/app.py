@@ -12,6 +12,7 @@ from infrastructure.stacks.stepfunctions import StepFunctionsStack
 from infrastructure.stacks.dynamodb_tickets import DynamodbTicketsStack
 from infrastructure.stacks.notification_system import NotificationSystemStack
 from infrastructure.stacks.sns_fanout import SnsFanoutStack
+from infrastructure.stacks.feature_flags import FeatureFlagsStack
 
 app = cdk.App()
 
@@ -31,5 +32,6 @@ StepFunctionsStack(app, "StepFunctionsStack", env=env, floci_endpoint=floci_endp
 DynamodbTicketsStack(app, "DynamodbTicketsStack", env=env, floci_endpoint=floci_endpoint)
 NotificationSystemStack(app, "NotificationSystemStack", env=env, floci_endpoint=floci_endpoint)
 SnsFanoutStack(app, "SnsFanoutStack", env=env, floci_endpoint=floci_endpoint)
+FeatureFlagsStack(app, "FeatureFlagsStack", env=env, floci_endpoint=floci_endpoint)
 
 app.synth()

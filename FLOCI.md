@@ -126,7 +126,7 @@ flowchart TB
 | **CloudFormation** | In-process | ✓ | init | Infrastructure as Code — stacks, change sets, resource provisioning | Deploy IaC templates locally, test stack updates, CI/CD pipelines |
 | **CloudWatch Logs** | In-process | ✓ | all Lambdas | Log management — log groups, streams, ingestion, filtering, metric filters | Centralized logging, log search, operational dashboards |
 | **CloudWatch Metrics** | In-process | | | Metrics & alarms — custom metrics, statistics, alarm thresholds | App monitoring, scaling signals, performance tracking |
-| **AppConfig + AppConfigData** | In-process | | | App config management — feature flags, config profiles, deployments | Dynamic config, canary config rollouts |
+| **AppConfig + AppConfigData** | In-process | ✓ | feature-flags | App config management — feature flags, config profiles, deployments | Dynamic config, canary config rollouts |
 | **AWS Backup** | In-process | | | Backup management — vaults, plans, on-demand jobs, recovery points | Backup automation, disaster recovery testing |
 
 ## Data & Analytics

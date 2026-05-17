@@ -139,6 +139,19 @@ tasks:
     cmds:
       - uv run python -m scenarios.dynamodb_ticket_system.run
 
+  # ─── Feature Flags ───────────────────────────────────
+
+  feature-flags:infrastructure:
+    desc: Deploy feature flags infrastructure (AppConfig, Lambda, API)
+    cmds:
+      - uv run python infrastructure/deploy.py FeatureFlagsStack
+
+  feature-flags:run:
+    desc: Open the feature flags dashboard; toggle widgets via AppConfig
+    deps: [feature-flags:infrastructure]
+    cmds:
+      - uv run python -m scenarios.feature_flags.run
+
   # ─── SNS Fanout ──────────────────────────────────────
 
   sns-fanout:infrastructure:

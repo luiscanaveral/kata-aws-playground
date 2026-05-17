@@ -218,7 +218,48 @@ flowchart LR
 
 ---
 
-## 9. SNS Fanout — Social Feed
+## 9. Feature Flags — AppConfig
+
+```mermaid
+flowchart LR
+    subgraph AppConfig["AWS AppConfig"]
+        APP[Application<br/>feature-flags-app]
+        ENV[Environment<br/>production]
+        PROF[Configuration Profile<br/>ui-layout]
+        CFG[Hosted Config Version<br/>widget flags JSON]
+        STRAT[Deployment Strategy<br/>quick-deploy]
+    end
+
+    CFG -->|deploy| ENV
+    APP --> PROF
+    PROF --> CFG
+
+    subgraph Frontend
+        BR[Browser<br/>HTML + JS]
+    end
+
+    BR -->|GET /| API[API Gateway]
+    BR -->|GET /flags| API
+    BR -->|POST /flags| API
+    API -->|Proxy| L[Lambda<br/>feature-flags-handler]
+
+    L -->|StartConfigurationSession<br/>GetLatestConfiguration| ACD[AppConfigData<br/>Data Plane]
+    L -->|CreateHostedConfigurationVersion<br/>StartDeployment| ACC[AppConfig<br/>Control Plane]
+
+    ACD -->|read flags| CFG
+    ACC -->|update flags| CFG
+    ACC -->|redeploy| ENV
+```
+
+**Flow:** A Lambda function serves a dashboard UI and a `/flags` API. `GET /flags` reads the current feature flag configuration via AppConfigData (data plane). Toggling a widget sends `POST /flags` which creates a new hosted configuration version and deploys it via AppConfig (control plane). The UI re-renders to reflect the new flag values.
+
+**Key concepts:** AppConfig Application/Environment/Profile, hosted configuration versions, AppConfigData data-plane reads, AppConfig control-plane writes, deployment strategies, feature flag toggling in a live UI.
+
+**Run:** `task feature-flags:infrastructure` then `task feature-flags:run`
+
+---
+
+## 10. SNS Fanout — Social Feed
 
 ```mermaid
 flowchart LR
